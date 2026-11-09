@@ -6,6 +6,9 @@ interface RevenueData {
     total_revenue: number;
     currency: string;
     reservations_count: number;
+    month?: number;
+    year?: number;
+    timezone?: string | null;
 }
 
 interface RevenueSummaryProps {
@@ -29,6 +32,8 @@ export const RevenueSummary: React.FC<RevenueSummaryProps> = ({ propertyId = 'pr
                 // We pass the simulatedTenant option which SecureAPI will attach as a header
                 const response = await SecureAPI.getDashboardSummary(propertyId, {
                     simulatedTenant: activeTenant,
+                    month: 3,
+                    year: 2024,
                     timestamp: Date.now()
                 });
                 setData(response);
@@ -75,7 +80,10 @@ export const RevenueSummary: React.FC<RevenueSummaryProps> = ({ propertyId = 'pr
             <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Revenue</h2>
+                        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">March 2024 Revenue</h2>
+                        {data.timezone && (
+                            <p className="text-xs text-gray-400 mt-1">{data.timezone}</p>
+                        )}
                         <div className="flex items-baseline gap-2 mt-1">
                             <span className="text-3xl font-bold text-gray-900 tracking-tight">
                                 {data.currency} {displayTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
