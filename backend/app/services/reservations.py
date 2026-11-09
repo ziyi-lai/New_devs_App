@@ -1,5 +1,5 @@
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict
 from zoneinfo import ZoneInfo
 import logging
@@ -36,9 +36,10 @@ async def _ensure_pool():
     return db_pool
 
 
-def _money_string(amount: Any) -> str:
-    """Exact decimal text. Currency rounding is applied by format_money."""
-    return format(Decimal(str(amount)), "f")
+def format_money(amount: Any) -> str:
+    """USD-style cents. Half up, never binary float."""
+    quantized = Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return f"{quantized:.2f}"
 
 
 async def _load_monthly_revenue(
@@ -67,7 +68,7 @@ async def _load_monthly_revenue(
         return {
             "property_id": property_id,
             "tenant_id": tenant_id,
-            "total": "0",
+            "total": "0.00",
             "currency": "USD",
             "count": 0,
             "month": month,
@@ -119,7 +120,7 @@ async def _load_monthly_revenue(
     return {
         "property_id": property_id,
         "tenant_id": tenant_id,
-        "total": _money_string(row.total_revenue),
+        "total": format_money(row.total_revenue),
         "currency": row.currency or "USD",
         "count": int(row.reservation_count or 0),
         "month": month,
