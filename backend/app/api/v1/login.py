@@ -45,8 +45,10 @@ async def login(request: LoginRequest):
             
             # Create mock JWT token
             user_data = {
+                "sub": "user-sunset",
                 "id": "user-sunset",
                 "email": "sunset@propertyflow.com",
+                "tenant_id": "tenant-a",
                 "app_metadata": {"role": "user", "tenant_id": "tenant-a"},
                 "user_metadata": {"name": "Sunset Properties Manager"},
                 "aud": "authenticated",
@@ -75,8 +77,10 @@ async def login(request: LoginRequest):
             
             # Create mock JWT token
             user_data = {
+                "sub": "user-ocean",
                 "id": "user-ocean",
                 "email": "ocean@propertyflow.com",
+                "tenant_id": "tenant-b",
                 "app_metadata": {"role": "user", "tenant_id": "tenant-b"},
                 "user_metadata": {"name": "Ocean Rentals Manager"},
                 "aud": "authenticated",
