@@ -69,27 +69,39 @@ class TenantResolver:
         return None
 
     @staticmethod
-    async def resolve_tenant_id(user_id: str, user_email: str, token: Optional[str] = None) -> str:
+    async def resolve_tenant_id(user_id: str, user_email: str, token: Optional[str] = None) -> Optional[str]:
         """
         Resolve tenant ID for a user.
-        
-        Args:
-            user_id: User ID
-            user_email: User email
-            
-        Returns:
-            Tenant ID
+
+        The JWT claim is authoritative. Known challenge accounts also map by
+        email. Unknown users are not assigned another company's tenant.
         """
-        # Fallback mapping by known user email.
+        if token:
+            try:
+                from jose import jwt
+                from ..config import settings
+
+                payload = jwt.decode(
+                    token,
+                    settings.secret_key,
+                    algorithms=["HS256"],
+                    audience="authenticated",
+                )
+                tenant_id = TenantResolver.resolve_tenant_from_token(payload)
+                if tenant_id:
+                    return tenant_id
+            except Exception as exc:
+                logger.info("Tenant token decode failed for %s: %s", user_email, exc.__class__.__name__)
+
         if user_email == "sunset@propertyflow.com":
             return "tenant-a"
         if user_email == "ocean@propertyflow.com":
             return "tenant-b"
         if user_email == "candidate@propertyflow.com":
             return "tenant-a"
-            
-        # Default fallback
-        return "tenant-a"
+
+        logger.warning("No tenant_id for user %s (%s)", user_email, user_id)
+        return None
 
     @staticmethod
     async def update_user_tenant_metadata(user_id: str, tenant_id: str) -> None:

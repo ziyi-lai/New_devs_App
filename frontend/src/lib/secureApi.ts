@@ -186,18 +186,17 @@ export class SecureAPIClient {
         // Check if it's a valid JWT
         else if (token.includes('.') && token.split('.').length === 3) {
           const payload = JSON.parse(atob(token.split('.')[1]));
-          extractedTenantId = payload.user_metadata?.tenant_id || payload.tenant_id;
+          extractedTenantId = payload.app_metadata?.tenant_id
+            || payload.user_metadata?.tenant_id
+            || payload.tenant_id;
         }
 
         if (extractedTenantId) {
-          // Validate tenant ID format (should be UUID)
           if (this.isValidTenantId(extractedTenantId)) {
             this.cachedTenantId = extractedTenantId;
             return this.cachedTenantId;
           } else {
             console.error('[SecureAPI] Invalid tenant ID format:', extractedTenantId);
-            // Clear invalid session to force re-authentication
-            this.cachedToken = null;
             this.cachedTenantId = null;
           }
         }
@@ -243,9 +242,13 @@ export class SecureAPIClient {
    * Validate tenant ID format for security
    */
   private isValidTenantId(tenantId: string): boolean {
-    // Check for UUID format (basic validation)
+    if (typeof tenantId !== 'string' || tenantId.length === 0 || tenantId.length > 64) {
+      return false;
+    }
+    // Challenge tenants are ids such as tenant-a, not only UUIDs.
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    return typeof tenantId === 'string' && tenantId.length > 0 && uuidRegex.test(tenantId);
+    const slugRegex = /^[A-Za-z0-9][A-Za-z0-9_-]*$/;
+    return uuidRegex.test(tenantId) || slugRegex.test(tenantId);
   }
 
   /**

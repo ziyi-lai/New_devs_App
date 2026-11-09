@@ -18,7 +18,9 @@ async def get_dashboard_summary(
     if year < 2000 or year > 2100:
         raise HTTPException(status_code=400, detail="year is out of range")
 
-    tenant_id = getattr(current_user, "tenant_id", "default_tenant") or "default_tenant"
+    tenant_id = getattr(current_user, "tenant_id", None)
+    if not tenant_id:
+        raise HTTPException(status_code=403, detail="Tenant context is required")
     
     revenue_data = await get_revenue_summary(property_id, tenant_id, month, year)
     
